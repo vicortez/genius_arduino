@@ -1,95 +1,111 @@
-#include <stdlib.h>// necessário p/ as funções rand() e srand()
-#include <time.h>//necessário p/ função time()
+/*
+ * code by Victor Cortez
+ * https://github.com/vicortez
+ * Contributors:
+ *  Matheus blabla
+ *  https://github.com/blabla
+ */
+//#include <stdlib.h>// necessário p/ as funções rand() e srand()
+//#include <time.h>//necessário p/ função time()
 
-#define bot_vm_press !digitalRead(botvm)
-#define bot_am_press !digitalRead(botam)
-#define bot_vd_press !digitalRead(botvd)
+#define bot_rd_press !digitalRead(botrd)
+#define bot_yl_press !digitalRead(botyl)
+#define bot_vd_press !digitalRead(botgr)
 #define N 10
 
 bool game_ended = false;
-int numLeds = 1;
+int level = 1;
 
-int botvd = 8;
-int botam = 9;
-int botvm = 10;
-int ledvd = 5;
-int ledam = 6;
-int ledvm = 7;
+//buttons and leds
+int botgr = 8;
+int botyl = 9;
+int botrd = 10;
+int ledgr = 5;
+int ledyl = 6;
+int ledrd = 7;
 
 int color_vec[20]={0};
 
 ///////////////////////////////////////////
 void start_game(){
   set_color_vec();
-  //um pra cada etapa do jogo
+  //one for each level
   for(int i = 0; i<N; i++){
-    light_leds();
-    push_buttons();
+    play_level();
     if(game_ended){
       break;
     }
-    numLeds++;
-    Serial.println("TERMINOU RODADA");
   }
 
   game_ended = true;
   Serial.println("GAME ENDED");
 }
 
-///////////////////////////////////////////
-void push_buttons(){
+void play_level(){
+    light_leds();
+    receive_button_pushes();
+    if(!game_ended){
+      level++;  
+    }
+    Serial.println("LEVEL FINISHED");
+}
 
-    for(int i = 0; i< numLeds; i++){
-      int button_press = catch_single_button_press();
-      if(button_press != color_vec[i]){
+
+///////////////////////////////////////////
+void receive_button_pushes(){
+    for(int i = 0; i< level; i++){
+      int button_pressed = catch_single_button_pressed();
+      if(button_pressed != color_vec[i]){
         game_ended = true;
         break;
       }
     }
-    
-
 }
 
+/*
+ * Waits for a button to be pressed, then returns the number
+ * that represents that button. (0, 1, 2 = rd, gr, yl <- TODO fix)
+ */
 //////////////////////////////////////////
-int catch_single_button_press(){
+int catch_single_button_pressed(){
     bool flag1 = 0;
     bool flag2 = 0;
     bool flag3 = 0;
         while(1){
-        Serial.println("esperar_botao");
-        Serial.println(digitalRead(botvm));
+        //Serial.println("waiting button");
+        //Serial.println(digitalRead(botrd));
         
-        if(bot_vm_press){
+          if(bot_rd_press ){
+            while(1){
+              Serial.println("botrd pressed");
+              if(!bot_rd_press){
+                Serial.println("botrd released");
+                flag1=1;
+                break;
+              }
+            }     
+          }
+        
+        if(bot_yl_press){
           while(1){
-            Serial.println("botvm pressionado");
-            if(!bot_vm_press){
-              Serial.println("botvm solto");
-              flag1=1;
+            Serial.println("botyl pressed");
+            if(!bot_yl_press){
+              Serial.println("botyl released");
+              flag2=1;
               break;
             }
-          }     
-        }
-      
-      if(bot_am_press){
-        while(1){
-          Serial.println("bot2 pressionado");
-          if(!bot_am_press){
-            Serial.println("bot2 solto");
-            flag2=1;
-            break;
           }
         }
-      }
-      if(bot_vd_press){
-        while(1){
-          Serial.println("botvd pressionado");
-          if(!bot_vd_press){
-            Serial.println("botvd solto");
-            flag3=1;
-            break;
+        if(bot_vd_press){
+          while(1){
+            Serial.println("botgr pressionado");
+            if(!bot_vd_press){
+              Serial.println("botgr solto");
+              flag3=1;
+              break;
+            }
           }
         }
-      }
         if(flag1  || flag2 || flag3){
           break;
         }
@@ -102,11 +118,14 @@ int catch_single_button_press(){
       return 2;
     }
     else{
-      Serial.println("nenhum");
+      Serial.println("none");
     }
 }
 
-///////////////////////////////////////////
+/*
+ *initialize the vector responsible for the color of the up to N 
+ *leds that will light up 
+ *///////////////////////////////
 void set_color_vec(){
   float color;
   for(int i=0; i<N; i++){
@@ -116,43 +135,43 @@ void set_color_vec(){
   } 
 }
 
-/////////////////////////////////////////////////////
+//////////////////////////////////////////
 void light_leds(){
-    for(int i = 0; i < numLeds; i++){
+    for(int i = 0; i < level; i++){
       if(color_vec[i] == 2){
-        digitalWrite(ledvd, HIGH);
-        digitalWrite(ledam, LOW);
-        digitalWrite(ledvm, LOW);
+        digitalWrite(ledgr, HIGH);
+        digitalWrite(ledyl, LOW);
+        digitalWrite(ledrd, LOW);
         delay(1000);
-        digitalWrite(ledvd, LOW);
+        digitalWrite(ledgr, LOW);
       }
       if(color_vec[i] == 1){
-        digitalWrite(ledam, HIGH);
-        digitalWrite(ledvd, LOW);
-        digitalWrite(ledvm, LOW);
+        digitalWrite(ledyl, HIGH);
+        digitalWrite(ledgr, LOW);
+        digitalWrite(ledrd, LOW);
         delay(1000);
-        digitalWrite(ledam, LOW);
+        digitalWrite(ledyl, LOW);
       }
       if(color_vec[i] == 0){
-        digitalWrite(ledvm, HIGH);
-        digitalWrite(ledam, LOW);
-        digitalWrite(ledvd, LOW);
+        digitalWrite(ledrd, HIGH);
+        digitalWrite(ledyl, LOW);
+        digitalWrite(ledgr, LOW);
         delay(1000);
-        digitalWrite(ledvm, LOW);
+        digitalWrite(ledrd, LOW);
       }
       delay(500);
   }
-      Serial.print("numleds: ");
-    Serial.println(numLeds);
+      Serial.print("level: ");
+    Serial.println(level);
 }
 
 void setup() {
-  pinMode(botvd, INPUT_PULLUP);
-  pinMode(botam, INPUT_PULLUP);
-  pinMode(botvm, INPUT_PULLUP);
-  pinMode(ledvd, OUTPUT);
-  pinMode(ledam, OUTPUT);
-  pinMode(ledvm, OUTPUT);
+  pinMode(botgr, INPUT_PULLUP);
+  pinMode(botyl, INPUT_PULLUP);
+  pinMode(botrd, INPUT_PULLUP);
+  pinMode(ledgr, OUTPUT);
+  pinMode(ledyl, OUTPUT);
+  pinMode(ledrd, OUTPUT);
 
   Serial.begin(9600);
 
@@ -160,14 +179,14 @@ void setup() {
 
 void loop() {
   if(!game_ended){
-    start_game();  
+    start_game();
   }
 
-  digitalWrite(ledvd, HIGH);
-  digitalWrite(ledam, HIGH);
-  digitalWrite(ledvm, HIGH);
-  Serial.print("POINTS: ");
-  Serial.println(numLeds);
+  digitalWrite(ledgr, HIGH);
+  digitalWrite(ledyl, HIGH);
+  digitalWrite(ledrd, HIGH);
+  Serial.print("LEVEL: ");
+  Serial.println(level-1);
   
   
 }
