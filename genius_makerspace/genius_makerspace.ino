@@ -10,7 +10,7 @@
 
 #define bot_rd_press !digitalRead(botrd)
 #define bot_yl_press !digitalRead(botyl)
-#define bot_vd_press !digitalRead(botgr)
+#define bot_gr_press !digitalRead(botgr)
 #define N 10
 
 bool game_ended = false;
@@ -56,6 +56,10 @@ void receive_button_pushes(){
     for(int i = 0; i< level; i++){
       int button_pressed = catch_single_button_pressed();
       if(button_pressed != color_vec[i]){
+        Serial.print("Missed a color. was supposed to hit ");
+        Serial.print(color_vec[i]);
+        Serial.print(" but hit ");
+        Serial.print(button_pressed);
         game_ended = true;
         break;
       }
@@ -65,6 +69,7 @@ void receive_button_pushes(){
 /*
  * Waits for a button to be pressed, then returns the number
  * that represents that button. (0, 1, 2 = rd, gr, yl <- TODO fix)
+ * Also lights the led for the duration the button is pressed.
  */
 //////////////////////////////////////////
 int catch_single_button_pressed(){
@@ -78,8 +83,10 @@ int catch_single_button_pressed(){
           if(bot_rd_press ){
             while(1){
               Serial.println("botrd pressed");
+              digitalWrite(ledrd, HIGH);
               if(!bot_rd_press){
                 Serial.println("botrd released");
+                digitalWrite(ledrd, LOW);
                 flag1=1;
                 break;
               }
@@ -89,18 +96,22 @@ int catch_single_button_pressed(){
         if(bot_yl_press){
           while(1){
             Serial.println("botyl pressed");
+            digitalWrite(ledyl, HIGH);
             if(!bot_yl_press){
               Serial.println("botyl released");
+              digitalWrite(ledyl, LOW);
               flag2=1;
               break;
             }
           }
         }
-        if(bot_vd_press){
+        if(bot_gr_press){
           while(1){
             Serial.println("botgr pressionado");
-            if(!bot_vd_press){
+            digitalWrite(ledgr, HIGH);
+            if(!bot_gr_press){
               Serial.println("botgr solto");
+              digitalWrite(ledgr, LOW);
               flag3=1;
               break;
             }
@@ -119,6 +130,7 @@ int catch_single_button_pressed(){
     }
     else{
       Serial.println("none");
+      return -1;
     }
 }
 
@@ -185,8 +197,8 @@ void loop() {
   digitalWrite(ledgr, HIGH);
   digitalWrite(ledyl, HIGH);
   digitalWrite(ledrd, HIGH);
-  Serial.print("LEVEL: ");
-  Serial.println(level-1);
+  Serial.print("REACHED LEVEL: ");
+  Serial.println(level -1);
   
   
 }
